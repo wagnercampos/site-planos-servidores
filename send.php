@@ -18,6 +18,7 @@ $email          = htmlspecialchars($input['email']           ?? '');
 $telefone       = htmlspecialchars($input['telefone']        ?? '');
 $cnpj           = htmlspecialchars($input['cnpj']            ?? '');
 $formaPagamento = htmlspecialchars($input['formaPagamento']  ?? '');
+$valor          = htmlspecialchars($input['valor']           ?? '—');
 
 if (!$nome || !$email || !$telefone) {
     echo json_encode(['ok' => false, 'msg' => 'Campos obrigatórios faltando']);
@@ -51,6 +52,7 @@ try {
         "Nova solicitação recebida pelo site MOA.labs\n" .
         str_repeat('=', 50) . "\n\n" .
         "Plano:            $plano\n" .
+        "Valor:            $valor\n" .
         "Forma pagamento:  $formaPagamento\n\n" .
         "Nome:      $nome\n" .
         "E-mail:    $email\n" .

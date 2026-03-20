@@ -563,13 +563,20 @@
     btn.disabled = true;
     btn.textContent = 'Enviando…';
 
+    const planKey = { 'Hospedagem':'hosp', 'Manutenção Básico':'bas', 'Manutenção Essencial':'ess', 'Manutenção Plus':'plus', 'Manutenção Pro':'pro' };
+    const key = planKey[selectedPlan];
+    const priceVal = key ? prices[key][currentPayment === '6x' ? 'x6' : currentPayment === '12x' ? 'x12' : currentPayment] : null;
+    const periodoLabel = { mensal: '/mês', anual: '/ano', '6x': '/mês (6x no cartão)', '12x': '/mês (12x no cartão)' };
+    const valor = priceVal ? 'R$ ' + priceVal + (periodoLabel[currentPayment] || '') : '—';
+
     const dados = {
       plano: selectedPlan,
       nome,
       email,
       telefone: tel,
       cnpj: document.getElementById('fieldCNPJ').value.trim(),
-      formaPagamento: currentPayment
+      formaPagamento: currentPayment,
+      valor
     };
 
     fetch('send.php', {
