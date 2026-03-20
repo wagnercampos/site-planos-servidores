@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>MOA.labs — Planos de Hospedagem e Manutenção</title>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
@@ -557,12 +558,43 @@
     const email = document.getElementById('fieldEmail').value.trim();
     const tel   = document.getElementById('fieldTelefone').value.trim();
     if (!nome || !email || !tel) { alert('Preencha nome, e-mail e telefone.'); return; }
-    const dados = { plano: selectedPlan, nome, email, telefone: tel, cnpj: document.getElementById('fieldCNPJ').value.trim(), formaPagamento: currentPayment };
-    console.log('Solicitação:', dados);
-    document.getElementById('modalForm').style.display = 'none';
-    document.getElementById('successPlan').textContent = selectedPlan;
-    document.getElementById('modalSuccess').style.display = 'block';
-    setTimeout(closeModal, 4000);
+
+    const btn = document.querySelector('.modal-submit');
+    btn.disabled = true;
+    btn.textContent = 'Enviando…';
+
+    const dados = {
+      plano: selectedPlan,
+      nome,
+      email,
+      telefone: tel,
+      cnpj: document.getElementById('fieldCNPJ').value.trim(),
+      formaPagamento: currentPayment
+    };
+
+    fetch('send.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.ok) {
+        document.getElementById('modalForm').style.display = 'none';
+        document.getElementById('successPlan').textContent = selectedPlan;
+        document.getElementById('modalSuccess').style.display = 'block';
+        setTimeout(closeModal, 4000);
+      } else {
+        alert('Erro ao enviar. Tente novamente.');
+        btn.disabled = false;
+        btn.textContent = 'Enviar solicitação →';
+      }
+    })
+    .catch(() => {
+      alert('Erro de conexão. Tente novamente.');
+      btn.disabled = false;
+      btn.textContent = 'Enviar solicitação →';
+    });
   }
 
   const observer = new IntersectionObserver(entries => {
