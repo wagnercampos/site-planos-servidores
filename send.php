@@ -1,8 +1,5 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['ok' => false, 'msg' => 'Method not allowed']);
@@ -15,40 +12,56 @@ if (!$input) {
     exit;
 }
 
-$plano         = htmlspecialchars($input['plano']          ?? '');
-$nome          = htmlspecialchars($input['nome']           ?? '');
-$email         = htmlspecialchars($input['email']          ?? '');
-$telefone      = htmlspecialchars($input['telefone']       ?? '');
-$cnpj          = htmlspecialchars($input['cnpj']           ?? '');
-$formaPagamento = htmlspecialchars($input['formaPagamento'] ?? '');
+$plano          = htmlspecialchars($input['plano']           ?? '');
+$nome           = htmlspecialchars($input['nome']            ?? '');
+$email          = htmlspecialchars($input['email']           ?? '');
+$telefone       = htmlspecialchars($input['telefone']        ?? '');
+$cnpj           = htmlspecialchars($input['cnpj']            ?? '');
+$formaPagamento = htmlspecialchars($input['formaPagamento']  ?? '');
 
 if (!$nome || !$email || !$telefone) {
     echo json_encode(['ok' => false, 'msg' => 'Campos obrigatórios faltando']);
     exit;
 }
 
-$para    = 'wagnercamposneto@gmail.com';
-$assunto = "Nova solicitação — Plano $plano | MOA.labs";
+require __DIR__ . '/vendor/autoload.php';
 
-$corpo  = "Nova solicitação recebida pelo site MOA.labs\n";
-$corpo .= str_repeat('=', 50) . "\n\n";
-$corpo .= "Plano:           $plano\n";
-$corpo .= "Forma pagamento: $formaPagamento\n\n";
-$corpo .= "Nome:     $nome\n";
-$corpo .= "E-mail:   $email\n";
-$corpo .= "Telefone: $telefone\n";
-$corpo .= "CNPJ:     " . ($cnpj ?: 'Não informado') . "\n";
-$corpo .= "\n" . str_repeat('=', 50) . "\n";
-$corpo .= "Enviado em: " . date('d/m/Y H:i:s') . " (horário do servidor)\n";
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
 
-$headers  = "From: MOA.labs <noreply@agenciamoa.com.br>\r\n";
-$headers .= "Reply-To: $email\r\n";
-$headers .= "X-Mailer: PHP/" . phpversion();
+$mail = new PHPMailer(true);
 
-$enviado = mail($para, $assunto, $corpo, $headers);
+try {
+    $mail->isSMTP();
+    $mail->Host       = 'mail.agenciamoa.com.br';
+    $mail->SMTPAuth   = true;
+    $mail->Username   = 'servidores@agenciamoa.com.br';
+    $mail->Password   = 'h9K2.&uGc4p_';
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+    $mail->Port       = 587;
+    $mail->CharSet    = 'UTF-8';
 
-if ($enviado) {
+    $mail->setFrom('servidores@agenciamoa.com.br', 'MOA.labs');
+    $mail->addAddress('wagnercamposneto@gmail.com', 'Wagner');
+    $mail->addReplyTo($email, $nome);
+
+    $mail->Subject = "Nova solicitação — Plano $plano | MOA.labs";
+    $mail->Body    =
+        "Nova solicitação recebida pelo site MOA.labs\n" .
+        str_repeat('=', 50) . "\n\n" .
+        "Plano:            $plano\n" .
+        "Forma pagamento:  $formaPagamento\n\n" .
+        "Nome:      $nome\n" .
+        "E-mail:    $email\n" .
+        "Telefone:  $telefone\n" .
+        "CNPJ:      " . ($cnpj ?: 'Não informado') . "\n\n" .
+        str_repeat('=', 50) . "\n" .
+        "Enviado em: " . date('d/m/Y H:i:s') . "\n";
+
+    $mail->send();
     echo json_encode(['ok' => true]);
-} else {
-    echo json_encode(['ok' => false, 'msg' => 'Falha ao enviar e-mail']);
+
+} catch (Exception $e) {
+    echo json_encode(['ok' => false, 'msg' => $mail->ErrorInfo]);
 }
